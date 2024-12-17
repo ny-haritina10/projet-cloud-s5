@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\SignupController;
 use App\Http\Controllers\Api\SignupSMTPController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\LoginController;
+use App\Http\Controllers\Api\TokenController;
 
 
 /*
@@ -25,6 +27,13 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::prefix('auth')->group(function () {
     Route::post('/smtp/signup', [SignupSMTPController::class, 'signup']);
     Route::post('/smtp/verify-email', [SignupSMTPController::class, 'verifyEmail']);
+    Route::post('/login', [LoginController::class, 'login']);
+    Route::get('/reset-login-attempts', [LoginController::class, 'resetLoginAttempts']);
+    Route::post('/logout', [TokenController::class, 'logout'])
+        ->middleware('token.auth');
+    
+    Route::get('/token/validate', [TokenController::class, 'checkTokenValidity'])
+        ->middleware('token.auth');
 });
 
 Route::prefix('users')->group(function () {

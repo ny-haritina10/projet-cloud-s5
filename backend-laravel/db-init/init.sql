@@ -16,3 +16,9 @@ ADD COLUMN verification_code_expires_at TIMESTAMP NULL;
 
 ALTER TABLE users
 ADD COLUMN email_verified_at TIMESTAMP NULL;
+
+ALTER TABLE users
+ADD COLUMN login_attempts INT DEFAULT 0,
+ADD COLUMN last_login_attempt_at TIMESTAMP NULL,
+ADD COLUMN reset_attempts_token VARCHAR(255) NULL,
+ADD COLUMN reset_attempts_token_expires_at TIMESTAMP NULL;

@@ -11,7 +11,7 @@ use App\Models\User;
 use Carbon\Carbon;
 
 class SignupSMTPController extends Controller
-{
+{   
     public function signup(Request $request)
     {
         // Validate input
@@ -41,7 +41,7 @@ class SignupSMTPController extends Controller
                 'user_birthday' => $request->birthday,
                 'email_verification_code' => $verificationCode,
                 'email_verified_at' => null,
-                'verification_code_expires_at' => Carbon::now()->addMinutes(1.5)    // 90 seconds
+                'verification_code_expires_at' => Carbon::now()->addMinutes(60 + 3), // add one hour to match mada hour 
             ]);
 
             // Send verification email
@@ -87,7 +87,8 @@ class SignupSMTPController extends Controller
         }
 
         // Check if code is expired
-        if (Carbon::now()->isAfter($user->verification_code_expires_at)) {
+        if (Carbon::now()->addMinutes(60)->isAfter($user->verification_code_expires_at)) {
+            $user->delete();
             return response()->json([
                 'status' => 'error',
                 'message' => 'Verification code has expired'
@@ -95,7 +96,7 @@ class SignupSMTPController extends Controller
         }
 
         // Mark email as verified
-        $user->email_verified_at = Carbon::now();
+        $user->email_verified_at = Carbon::now()->addMinutes(60);
         $user->email_verification_code = null;
         $user->verification_code_expires_at = null;
         $user->save();

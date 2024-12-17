@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -18,18 +19,10 @@ class UserController extends Controller
      */
     public function update(Request $request, $id)
     {
-        // Validate the input
         $validator = Validator::make($request->all(), [
             'user_name' => 'sometimes|string|max:255',
-            // 'user_email' => 'sometimes|email|max:255|unique:users,user_email,' . $id,
             'user_password' => 'sometimes|string|min:8',
             'user_birthday' => 'sometimes|date',
-            // 'token_last_used_at' => 'sometimes|date',
-            // 'token_expires_at' => 'sometimes|date',
-            // 'token' => 'sometimes|string|max:255',
-            // 'email_verification_code' => 'sometimes|string|max:255',
-            // 'verification_code_expires_at' => 'sometimes|date',
-            // 'email_verified_at' => 'sometimes|date',
         ]);
 
         if ($validator->fails()) {
@@ -39,18 +32,23 @@ class UserController extends Controller
             ], 422);
         }
 
-        // Fetch the user
         $user = User::find($id);
 
         if (!$user) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'User not found.',
-            ], 404);
+            ], 404);    
         }
 
-        // Update user fields
-        $user->update($request->all());
+        $data = $request->except(['user_password']);
+        $user->fill($data);
+
+        if ($request->has('user_password')) {
+            $user->user_password = Hash::make($request->user_password);
+        }
+
+        $user->save();
 
         return response()->json([
             'status' => 'success',
