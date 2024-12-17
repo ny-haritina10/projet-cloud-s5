@@ -1,0 +1,42 @@
+# Ignore the .env file for security reasons
+.env
+
+# Ignore vendor directory (if you use composer install in Docker)
+vendor/
+
+# Ignore node_modules (if using Node.js for frontend assets)
+node_modules/
+
+# Ignore log files
+storage/logs/*
+storage/*.log
+
+# Ignore compiled view files
+storage/framework/views/*
+
+# Ignore cache files
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/testing/*
+
+# Ignore IDE specific files
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Ignore OS generated files
+.DS_Store
+Thumbs.db
+
+# Ignore any local configuration files
+Homestead.yaml
+Homestead.json
+
+# Ignore other unnecessary files
+/public/hot
+/public/storage
+/public/mix-manifest.json
+
+# Ignore backup files
+*.bak
+*.tmp
