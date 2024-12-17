@@ -29,8 +29,5 @@ RUN chown -R www-data:www-data /var/www/html \
 # Expose port 8000
 EXPOSE 8000
 
-# Migrate init table
-CMD php artisan migrate
-
 # Start the PHP server
 CMD php artisan serve --host=0.0.0.0 --port=8000
