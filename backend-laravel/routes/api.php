@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\SignupController;
 use App\Http\Controllers\Api\SignupSMTPController;
+use App\Http\Controllers\Api\UserController;
 
 
 /*
@@ -22,7 +23,10 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::prefix('auth')->group(function () {
-    // SMTP-based signup routes
     Route::post('/smtp/signup', [SignupSMTPController::class, 'signup']);
     Route::post('/smtp/verify-email', [SignupSMTPController::class, 'verifyEmail']);
+});
+
+Route::prefix('users')->group(function () {
+    Route::put('/{id}', [UserController::class, 'update']);
 });
