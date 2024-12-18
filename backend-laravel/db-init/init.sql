@@ -22,3 +22,9 @@ ADD COLUMN login_attempts INT DEFAULT 0,
 ADD COLUMN last_login_attempt_at TIMESTAMP NULL,
 ADD COLUMN reset_attempts_token VARCHAR(255) NULL,
 ADD COLUMN reset_attempts_token_expires_at TIMESTAMP NULL;
+
+ALTER TABLE users
+ADD COLUMN verification_attempts INT DEFAULT 0,
+ADD COLUMN last_verification_attempt_at TIMESTAMP NULL,
+ADD COLUMN reset_verification_attempts_token VARCHAR(255) NULL,
+ADD COLUMN reset_verification_attempts_token_expires_at TIMESTAMP NULL;

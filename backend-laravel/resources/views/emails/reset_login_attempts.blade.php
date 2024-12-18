@@ -42,6 +42,7 @@
 
         <p><a href="{{ $resetLink }}">Reset Login Attempts</a></p>
         <p>If you did not attempt to log in, please contact our support team.</p>
+        <p>This link will expire in 1 hour.</p>
 
         <p class="footer">Best regards,<br>Your App Support Team</p>
     </div>

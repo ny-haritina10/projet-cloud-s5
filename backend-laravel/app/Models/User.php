@@ -28,6 +28,10 @@ class User extends Model
         'reset_attempts_token_expires_at',
         'login_attempts',
         'last_login_attempt_at',
+        'verification_attempts',
+        'last_verification_attempt_at',
+        'reset_verification_attempts_token',
+        'reset_verification_attempts_token_expires_at'
     ];
 
     protected $hidden = [
