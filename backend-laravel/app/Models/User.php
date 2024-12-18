@@ -24,6 +24,10 @@ class User extends Model
         'email_verification_code',
         'verification_code_expires_at',
         'email_verified_at',
+        'reset_attempts_token',
+        'reset_attempts_token_expires_at',
+        'login_attempts',
+        'last_login_attempt_at',
     ];
 
     protected $hidden = [

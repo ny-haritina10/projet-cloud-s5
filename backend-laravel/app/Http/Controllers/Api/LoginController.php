@@ -69,11 +69,13 @@ class LoginController extends Controller
             ], 401);
         }
 
-        // Successful login
+        // Successful login, reset attempts
         $this->loginAttemptService->resetLoginAttempts($user);
 
-        // Generate token
+        // user token
         $token = Str::random(60);
+
+        // expiration is one day
         $tokenExpiration = now()->addHours(config('auth.token_expiration', 24));
 
         $user->update([
@@ -103,11 +105,11 @@ class LoginController extends Controller
             ], 400);
         }
 
-        $user = User::where('user_email', $request->email)
-            ->where('reset_attempts_token', $request->reset_token)
+        $user = User::where('user_email', $request->input('email'))
+            ->where('reset_attempts_token', $request->input('reset_token'))
             ->first();
 
-        if (!$user || now()->isAfter($user->reset_attempts_token_expires_at)) {
+        if (!$user || !$user->reset_attempts_token_expires_at || now()->isAfter($user->reset_attempts_token_expires_at)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Invalid or expired reset token'
@@ -130,6 +132,7 @@ class LoginController extends Controller
     {
         $resetToken = Str::random(40);
         $resetTokenExpiration = now()->addHours(1);
+
 
         $user->update([
             'reset_attempts_token' => $resetToken,

@@ -11,6 +11,7 @@ class TokenController extends Controller
 {
     public function logout(Request $request)
     {
+        // retrieve the user token
         $token = $request->bearerToken();
 
         if (!$token) {
