@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use OpenApi\Annotations as OA;
 use App\Http\Controllers\Controller;
 use App\Services\LoginAttemptService;
 use Illuminate\Http\Request;
@@ -23,6 +24,32 @@ class LoginController extends Controller
         $this->maxAttempts = config('auth.max_login_attempts', 3);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/auth/login",
+     *     tags={"Authentication"},
+     *     summary="Login user",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"email","password"},
+     *             @OA\Property(property="email", type="string", format="email"),
+     *             @OA\Property(property="password", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Login successful",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="token", type="string"),
+     *             @OA\Property(property="expires_at", type="string", format="date-time")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, ref="#/components/schemas/Error"),
+     *     @OA\Response(response=403, ref="#/components/schemas/Error")
+     * )
+     */
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -91,6 +118,27 @@ class LoginController extends Controller
         ]);
     }
 
+    /**
+    * @OA\Get(
+    *     path="/auth/reset-login-attempts",
+    *     tags={"Authentication"},
+    *     summary="Reset login attempts",
+    *     @OA\Parameter(
+    *         name="email",
+    *         in="query",
+    *         required=true,
+    *         @OA\Schema(type="string", format="email")
+    *     ),
+    *     @OA\Parameter(
+    *         name="reset_token",
+    *         in="query",
+    *         required=true,
+    *         @OA\Schema(type="string")
+    *     ),
+    *     @OA\Response(response=200, ref="#/components/schemas/Success"),
+    *     @OA\Response(response=400, ref="#/components/schemas/Error")
+    * )
+    */
     public function resetLoginAttempts(Request $request)
     {
         $validator = Validator::make($request->all(), [

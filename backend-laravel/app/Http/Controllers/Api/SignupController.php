@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use App\Models\User;
 use Carbon\Carbon;
-
+use OpenApi\Annotations as OA;
 class SignupController extends Controller
 {   
     protected $verificationAttemptService;
@@ -25,60 +25,34 @@ class SignupController extends Controller
         $this->maxVerificationAttempts = config('auth.max_verification_attempts', 3);
     }
 
-    public function verifyEmailExistence($email){
-        $apiKey = env('ABSTRACT_API_KEY');
-        $url = "https://emailvalidation.abstractapi.com/v1/?api_key={$apiKey}&email=" . urlencode($email);
-
-        try {
-            $response = Http::get($url);
-            $data = $response->json();
-
-            // Analyse détaillée de la réponse
-            $result = [
-                'is_valid' => $data['deliverability'] === 'DELIVERABLE',
-                'email' => $data['email'],
-                'quality_score' => $data['quality_score'],
-                'details' => [
-                    'is_valid_format' => $data['is_valid_format']['value'],
-                    'is_free_email' => $data['is_free_email']['value'],
-                    'is_disposable_email' => $data['is_disposable_email']['value'],
-                    'is_role_email' => $data['is_role_email']['value'],
-                    'is_catchall_email' => $data['is_catchall_email']['value'],
-                    'is_mx_found' => $data['is_mx_found']['value'],
-                    'is_smtp_valid' => $data['is_smtp_valid']['value']
-                ]
-            ];
-
-            // Conditions de validité plus strictes
-            $isValidEmail = $result['is_valid'] &&
-                            $result['details']['is_valid_format'] &&
-                            $result['details']['is_mx_found'] &&
-                            $result['details']['is_smtp_valid'] &&
-                            !$result['details']['is_disposable_email'];
-
-            // Réponse basée sur la validité
-            if ($isValidEmail) {
-                return response()->json([
-                    'status' => true,
-                    'message' => 'Email valide et existant',
-                    'data' => $result
-                ]);
-            } else {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Email invalide ou non existant',
-                    'data' => $result
-                ], 400);
-            }
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Erreur de vérification : ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
+    /** 
+    * @OA\Post(
+    *     path="/auth/signup",
+    *     tags={"Authentication"},
+    *     summary="Register a new user",
+    *     @OA\RequestBody(
+    *         required=true,
+    *         @OA\JsonContent(
+    *             required={"email","password","name","birthday"},
+    *             @OA\Property(property="email", type="string", format="email"),
+    *             @OA\Property(property="password", type="string", minimum=6),
+    *             @OA\Property(property="name", type="string"),
+    *             @OA\Property(property="birthday", type="string", format="date")
+    *         )
+    *     ),
+    *     @OA\Response(
+    *         response=201,
+    *         description="User registered successfully",
+    *         @OA\JsonContent(
+    *             @OA\Property(property="status", type="string", example="success"),
+    *             @OA\Property(property="message", type="string"),
+    *             @OA\Property(property="user_id", type="integer")
+    *         )
+    *     ),
+    *     @OA\Response(response=400, ref="#/components/schemas/Error"),
+    *     @OA\Response(response=500, ref="#/components/schemas/Error")
+    * )
+    */
     public function signup(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -148,7 +122,24 @@ class SignupController extends Controller
         });
     }
 
-    // verify email pin
+    /** 
+    * @OA\Post(
+    *     path="/auth/verify-email",
+    *     tags={"Authentication"},
+    *     summary="Verify email with PIN code",
+    *     @OA\RequestBody(
+    *         required=true,
+    *         @OA\JsonContent(
+    *             required={"email","verification_code"},
+    *             @OA\Property(property="email", type="string", format="email"),
+    *             @OA\Property(property="verification_code", type="string", pattern="^\d{4}$")
+    *         )
+    *     ),
+    *     @OA\Response(response=200, ref="#/components/schemas/Success"),
+    *     @OA\Response(response=400, ref="#/components/schemas/Error"),
+    *     @OA\Response(response=404, ref="#/components/schemas/Error")
+    * )
+    */
     public function verifyEmail(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -221,6 +212,105 @@ class SignupController extends Controller
         ], 200);
     }
 
+    /** 
+    * @OA\Get(
+    *     path="/auth/verify-email-existence/{email}",
+    *     tags={"Authentication"},
+    *     summary="Check if email exists and is valid",
+    *     @OA\Parameter(
+    *         name="email",
+    *         in="path",
+    *         required=true,
+    *         @OA\Schema(type="string", format="email")
+    *     ),
+    *     @OA\Response(
+    *         response=200,
+    *         description="Email validation result",
+    *         @OA\JsonContent(
+    *             @OA\Property(property="status", type="boolean"),
+    *             @OA\Property(property="message", type="string"),
+    *             @OA\Property(property="data", type="object")
+    *         )
+    *     ),
+    *     @OA\Response(response=400, ref="#/components/schemas/Error"),
+    *     @OA\Response(response=500, ref="#/components/schemas/Error")
+    * )
+    */  
+    public function verifyEmailExistence($email){
+        $apiKey = env('ABSTRACT_API_KEY');
+        $url = "https://emailvalidation.abstractapi.com/v1/?api_key={$apiKey}&email=" . urlencode($email);
+
+        try {
+            $response = Http::get($url);
+            $data = $response->json();
+
+            // Analyse détaillée de la réponse
+            $result = [
+                'is_valid' => $data['deliverability'] === 'DELIVERABLE',
+                'email' => $data['email'],
+                'quality_score' => $data['quality_score'],
+                'details' => [
+                    'is_valid_format' => $data['is_valid_format']['value'],
+                    'is_free_email' => $data['is_free_email']['value'],
+                    'is_disposable_email' => $data['is_disposable_email']['value'],
+                    'is_role_email' => $data['is_role_email']['value'],
+                    'is_catchall_email' => $data['is_catchall_email']['value'],
+                    'is_mx_found' => $data['is_mx_found']['value'],
+                    'is_smtp_valid' => $data['is_smtp_valid']['value']
+                ]
+            ];
+
+            // Conditions de validité plus strictes
+            $isValidEmail = $result['is_valid'] &&
+                            $result['details']['is_valid_format'] &&
+                            $result['details']['is_mx_found'] &&
+                            $result['details']['is_smtp_valid'] &&
+                            !$result['details']['is_disposable_email'];
+
+            // Réponse basée sur la validité
+            if ($isValidEmail) {
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Email valide et existant',
+                    'data' => $result
+                ]);
+            } else {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Email invalide ou non existant',
+                    'data' => $result
+                ], 400);
+            }
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Erreur de vérification : ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /** 
+    * @OA\Get(
+    *     path="/auth/reset-verification-attempts",
+    *     tags={"Authentication"},
+    *     summary="Reset verification attempts",
+    *     @OA\Parameter(
+    *         name="email",
+    *         in="query",
+    *         required=true,
+    *         @OA\Schema(type="string", format="email")
+    *     ),
+    *     @OA\Parameter(
+    *         name="reset_token",
+    *         in="query",
+    *         required=true,
+    *         @OA\Schema(type="string")
+    *     ),
+    *     @OA\Response(response=200, ref="#/components/schemas/Success"),
+    *     @OA\Response(response=400, ref="#/components/schemas/Error")
+    * )
+    */ 
     public function resetVerificationAttempts(Request $request)
     {
         $validator = Validator::make($request->all(), [
