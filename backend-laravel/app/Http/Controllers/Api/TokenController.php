@@ -6,9 +6,20 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Carbon\Carbon;
+use OpenApi\Annotations as OA;
 
 class TokenController extends Controller
 {
+    /** 
+    * @OA\Post(
+    *     path="/auth/logout",
+    *     tags={"Authentication"},
+    *     summary="Logout user",
+    *     security={{"BearerAuth":{}}},
+    *     @OA\Response(response=200, ref="#/components/schemas/Success"),
+    *     @OA\Response(response=401, ref="#/components/schemas/Error")
+    * )
+    */ 
     public function logout(Request $request)
     {
         // retrieve the user token
@@ -43,6 +54,24 @@ class TokenController extends Controller
         ]);
     }
 
+    /** 
+    * @OA\Get(
+    *     path="/auth/token/validate",
+    *     tags={"Authentication"},
+    *     summary="Validate authentication token",
+    *     security={{"BearerAuth":{}}},
+    *     @OA\Response(
+    *         response=200,
+    *         description="Token is valid",
+    *         @OA\JsonContent(
+    *             @OA\Property(property="status", type="string", example="success"),
+    *             @OA\Property(property="message", type="string"),
+    *             @OA\Property(property="expires_at", type="string", format="date-time")
+    *         )
+    *     ),
+    *     @OA\Response(response=401, ref="#/components/schemas/Error")
+    * )
+    */
     public function checkTokenValidity(Request $request)
     {
         $token = $request->bearerToken();
@@ -90,7 +119,6 @@ class TokenController extends Controller
         ]);
     }
 
-    // Optional: Automated token cleanup job
     public function cleanupExpiredTokens()
     {
         $expiredTokens = User::whereNotNull('token')

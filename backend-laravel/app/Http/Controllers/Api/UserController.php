@@ -7,16 +7,42 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
+use OpenApi\Annotations as OA;
 
 class UserController extends Controller
 {
-    /**
-     * Update a user by ID.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
-     */
+    /** 
+    * @OA\Put(
+    *     path="/users/{id}",
+    *     tags={"Users"},
+    *     summary="Update user information",
+    *     @OA\Parameter(
+    *         name="id",
+    *         in="path",
+    *         required=true,
+    *         @OA\Schema(type="integer")
+    *     ),
+    *     @OA\RequestBody(
+    *         required=true,
+    *         @OA\JsonContent(
+    *             @OA\Property(property="user_name", type="string", maxLength=255),
+    *             @OA\Property(property="user_password", type="string", minLength=8),
+    *             @OA\Property(property="user_birthday", type="string", format="date")
+    *         )
+    *     ),
+    *     @OA\Response(
+    *         response=200,
+    *         description="User updated successfully",
+    *         @OA\JsonContent(
+    *             @OA\Property(property="status", type="string", example="success"),
+    *             @OA\Property(property="message", type="string"),
+    *             @OA\Property(property="data", type="object")
+    *         )
+    *     ),
+    *     @OA\Response(response=422, ref="#/components/schemas/Error"),
+    *     @OA\Response(response=404, ref="#/components/schemas/Error")
+    * )
+    */
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
