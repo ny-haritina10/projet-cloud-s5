@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\SignupController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,3 +17,6 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/auth/google/callback', [SignupController::class, 'handleCallback'])->name('google.callback'); 
+Route::get('/auth/google', [SignupController::class, 'authenticate'])->name('google.auth');
