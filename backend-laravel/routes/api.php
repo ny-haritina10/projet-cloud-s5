@@ -26,6 +26,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::prefix('auth')->group(function () {
     Route::post('/signup', [SignupController::class, 'signup']);
     Route::post('/verify-email', [SignupController::class, 'verifyEmail']);
+    Route::get('/verify-email-existence/{email}', [SignupController::class, 'verifyEmailExistence']);
+
     Route::post('/login', [LoginController::class, 'login']);
     
     Route::get('/reset-login-attempts', [LoginController::class, 'resetLoginAttempts']);

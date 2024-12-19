@@ -3,22 +3,82 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\VerificationAttemptService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Http; 
 use Illuminate\Support\Str;
 use App\Models\User;
 use Carbon\Carbon;
 
 class SignupController extends Controller
 {   
+    protected $verificationAttemptService;
+
     protected $maxVerificationAttempts;
 
-    public function __construct()
+    public function __construct(VerificationAttemptService $verificationAttemptService)
     {
+        $this->verificationAttemptService = $verificationAttemptService;
         $this->maxVerificationAttempts = config('auth.max_verification_attempts', 3);
     }
+
+    public function verifyEmailExistence($email){
+        $apiKey = env('ABSTRACT_API_KEY');
+        $url = "https://emailvalidation.abstractapi.com/v1/?api_key={$apiKey}&email=" . urlencode($email);
+
+        try {
+            $response = Http::get($url);
+            $data = $response->json();
+
+            // Analyse détaillée de la réponse
+            $result = [
+                'is_valid' => $data['deliverability'] === 'DELIVERABLE',
+                'email' => $data['email'],
+                'quality_score' => $data['quality_score'],
+                'details' => [
+                    'is_valid_format' => $data['is_valid_format']['value'],
+                    'is_free_email' => $data['is_free_email']['value'],
+                    'is_disposable_email' => $data['is_disposable_email']['value'],
+                    'is_role_email' => $data['is_role_email']['value'],
+                    'is_catchall_email' => $data['is_catchall_email']['value'],
+                    'is_mx_found' => $data['is_mx_found']['value'],
+                    'is_smtp_valid' => $data['is_smtp_valid']['value']
+                ]
+            ];
+
+            // Conditions de validité plus strictes
+            $isValidEmail = $result['is_valid'] &&
+                            $result['details']['is_valid_format'] &&
+                            $result['details']['is_mx_found'] &&
+                            $result['details']['is_smtp_valid'] &&
+                            !$result['details']['is_disposable_email'];
+
+            // Réponse basée sur la validité
+            if ($isValidEmail) {
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Email valide et existant',
+                    'data' => $result
+                ]);
+            } else {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Email invalide ou non existant',
+                    'data' => $result
+                ], 400);
+            }
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Erreur de vérification : ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function signup(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -33,6 +93,17 @@ class SignupController extends Controller
                 'status' => 'error',
                 'errors' => $validator->errors()
             ], 400);
+        }
+
+        // Check email existence
+        $emailExistenceResponse = $this->verifyEmailExistence($request->email);
+        $emailExistence = json_decode($emailExistenceResponse->getContent(), true); 
+
+        if (!$emailExistence['status']) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $emailExistence['message']
+            ]);
         }
 
         // generate code pin
@@ -77,6 +148,7 @@ class SignupController extends Controller
         });
     }
 
+    // verify email pin
     public function verifyEmail(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -119,6 +191,14 @@ class SignupController extends Controller
             // Check if max attempts reached
             if ($user->verification_attempts >= $this->maxVerificationAttempts) {
                 $this->sendResetVerificationAttemptsEmail($user);
+
+                // Check if user is blocked due to too many attempts
+                if ($this->verificationAttemptService->isBlocked($user)) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Too many login attempts. Please reset your attempts.'
+                    ], 403);
+                }
             }
 
             return response()->json([
