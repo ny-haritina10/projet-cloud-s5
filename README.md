@@ -28,13 +28,3 @@ How to run the laravel backend
    The application will be available at:
 
    [http://localhost:8000](http://localhost:8000)
-
-3. **Access the Database**
-
-   The PostgreSQL database can be accessed on:
-
-   - **Host:** `localhost`
-   - **Port:** `5433`
-   - **Database:** `docker_cloud_s5`
-   - **Username:** `postgres`
-   - **Password:** `docker_cloud_s5`

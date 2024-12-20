@@ -95,7 +95,7 @@ class SignupController extends Controller
 
                 // add one hour to match mada hour
                 // the pin expiration is 3 minutes 
-                'verification_code_expires_at' => Carbon::now()->addMinutes(60 + 3), 
+                'verification_code_expires_at' => Carbon::now('Indian/Antananarivo')->subMinutes(120)->addMinutes(3), 
             ]);
 
             $this->sendVerificationEmail($user->user_email, $verificationCode);
@@ -164,7 +164,7 @@ class SignupController extends Controller
         }
 
         // Check if code is expired
-        if (Carbon::now()->addMinutes(60)->isAfter($user->verification_code_expires_at)) {
+        if (Carbon::now('Indian/Antananarivo')->subMinutes(120)->isAfter($user->verification_code_expires_at)) {
             $user->delete();
             return response()->json([
                 'status' => 'error',
@@ -176,7 +176,7 @@ class SignupController extends Controller
         if ($user->email_verification_code !== $request->verification_code) {
             // Increment verification attempts
             $user->verification_attempts += 1;
-            $user->last_verification_attempt_at = now();
+            $user->last_verification_attempt_at = now('Indian/Antananarivo');
             $user->save();
 
             // Check if max attempts reached
@@ -200,8 +200,8 @@ class SignupController extends Controller
         }
 
         // Mark email as verified
-        $user->email_verified_at = Carbon::now()->addMinutes(60);
-        $user->email_verification_code = null;
+        $user->email_verified_at = Carbon::now('Indian/Antananarivo')->subMinutes(120);
+        $user->email_verification_code = null;  
         $user->verification_code_expires_at = null;
         $user->verification_attempts = 0;
         $user->save();
@@ -330,7 +330,7 @@ class SignupController extends Controller
             ->first();
 
         if (!$user || !$user->reset_verification_attempts_token_expires_at || 
-            now()->isAfter($user->reset_verification_attempts_token_expires_at)) {
+            now('Indian/Antananarivo')->isAfter($user->reset_verification_attempts_token_expires_at)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Invalid or expired reset token'
@@ -352,7 +352,7 @@ class SignupController extends Controller
     private function sendResetVerificationAttemptsEmail($user)
     {
         $resetToken = Str::random(40);
-        $resetTokenExpiration = now()->addHours(1);
+        $resetTokenExpiration = now('Indian/Antananarivo')->addHours(1);
 
         $user->update([
             'reset_verification_attempts_token' => $resetToken,

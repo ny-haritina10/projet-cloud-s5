@@ -33,7 +33,6 @@ Route::prefix('auth')->group(function () {
     Route::get('/reset-login-attempts', [LoginController::class, 'resetLoginAttempts']);
     Route::get('/reset-verification-attempts', [SignupController::class, 'resetVerificationAttempts']);
 
-
     Route::post('/logout', [TokenController::class, 'logout'])
         ->middleware('token.auth');
     
